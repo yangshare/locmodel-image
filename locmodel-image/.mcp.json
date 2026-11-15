@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "locmodel-image": {
+      "command": "python",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/locmodel_mcp.py"]
+    }
+  }
+}

@@ -1,0 +1,11 @@
+# Python
+__pycache__/
+*.pyc
+
+# 测试/运行产物
+tmp-out/
+generated-images/
+
+# 系统
+.DS_Store
+Thumbs.db

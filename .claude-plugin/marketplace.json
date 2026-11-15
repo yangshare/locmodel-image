@@ -1,0 +1,18 @@
+{
+  "name": "locmodel-image-market",
+  "plugins": [
+    {
+      "name": "locmodel-image",
+      "source": "./locmodel-image",
+      "version": "0.1.0",
+      "description": "Draw images through the local LocModel image engine (stable-diffusion.cpp sd-server): txt2img, img2img, LoRA list and engine status.",
+      "displayName": "LocModel Image",
+      "displayName_i18n": { "zh-CN": "LocModel 本地画图" },
+      "description_i18n": {
+        "zh-CN": "调用本机 LocModel 画图引擎（sd-server）进行文生图和图生图，自动发现引擎端口，出图保存到工作区。"
+      },
+      "category": "productivity",
+      "homepage": "https://github.com/yangshare/locmodel-image"
+    }
+  ]
+}
