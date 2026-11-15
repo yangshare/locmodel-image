@@ -1,5 +1,9 @@
 # LocModel Image · ZCode 本地画图插件
 
+<p align="center">
+  <img src="docs/banner.png" alt="LocModel Image：本机 LocModel 画图引擎接入 ZCode——文生图、图生图全部本地运行，无需云服务" width="100%">
+</p>
+
 一个 [ZCode](https://zcode.ai) 插件：把你本机 **LocModel** 应用内置的画图引擎接入 ZCode 会话，直接用自然语言出图、改图。
 
 > 非官方插件。LocModel 是 NEXORA SOFTWARE 的闭源软件，本插件只是调用它在本地暴露的 HTTP 接口，不涉及任何云服务。
@@ -50,7 +54,7 @@ LocModel 的画图内核是 stable-diffusion.cpp 的 `sd-server.exe`（llama.cpp
 ## 排错
 
 - **没有找到画图引擎**：先打开 LocModel 进入画图模式并加载一个画图模型（`sd-server` 只在画图模式运行时存在），然后重试
-- **引擎没有响应**：引擎重启后端口可能变化，工具会自动重新发现；也可设置环境变量 `LOCMODEL_PORT` 指定
+- **引擎没有响应**：引擎重启后端口可能变化，工具会自动重新发现；也可设置环境变量 `LOCMODEL_PORT` 指定。插件会把最近一次成功连接的端口记在 `%LOCALAPPDATA%\locmodel-image\last_port.json`，新会话优先复用它（v0.1.1 起）
 - **接口 4xx**：LocModel 的 sd-server 是其自定义分支，个别参数可能与标准 A1111 有出入，先用最小 payload（只有 prompt）重试
 
 ## License
