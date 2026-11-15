@@ -18,13 +18,14 @@ import re
 import subprocess
 import sys
 import time
+import traceback
 import urllib.error
 import urllib.request
 from datetime import datetime
 from pathlib import Path
 
 SERVER_NAME = "locmodel-image"
-SERVER_VERSION = "0.1.0"
+SERVER_VERSION = "0.1.1"
 GEN_TIMEOUT = 600          # seconds for a generation POST
 PROBE_TIMEOUT = 4          # seconds for discovery GETs
 PROBE_PORTS = [7860, 7861, 8080, 8000, 8001, 8188]  # 8188 = ComfyUI, just in case
@@ -91,6 +92,32 @@ def _probe_port(port):
 _port_cache = {"base": None, "at": 0.0}
 
 
+def _state_file():
+    """Last-known-good engine port, persisted so a fresh host process can
+    reuse it even when the process scan is unavailable in its environment."""
+    base = os.environ.get("LOCALAPPDATA") or os.environ.get("TEMP") or str(Path.home())
+    return Path(base) / "locmodel-image" / "last_port.json"
+
+
+def _load_last_port():
+    try:
+        port = int(json.loads(_state_file().read_text("utf-8")).get("port", 0))
+        return port if 0 < port < 65536 else None
+    except Exception:
+        return None
+
+
+def _save_last_port(port):
+    try:
+        f = _state_file()
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text(json.dumps({"port": port,
+                                 "at": datetime.now().isoformat(timespec="seconds")}),
+                     "utf-8")
+    except Exception as e:
+        log("save last_port failed:", e)
+
+
 def _pids_of(image_name):
     try:
         out = subprocess.run(
@@ -99,6 +126,8 @@ def _pids_of(image_name):
         ).stdout
     except Exception as e:
         log("tasklist failed:", e)
+        return []
+    if not out:
         return []
     pids = []
     for line in out.splitlines():
@@ -119,6 +148,8 @@ def _listening_ports(pids):
                              text=True, timeout=20).stdout
     except Exception as e:
         log("netstat failed:", e)
+        return []
+    if not out:
         return []
     ports = []
     for line in out.splitlines():
@@ -145,6 +176,10 @@ def discover_base(force=False):
     if env_port and env_port.isdigit():
         candidates.append(int(env_port))
 
+    last_port = _load_last_port()
+    if last_port and last_port not in candidates:
+        candidates.append(last_port)
+
     for pid_port in _listening_ports(_pids_of(ENGINE_PROCESS)):
         if pid_port not in candidates:
             candidates.append(pid_port)
@@ -157,6 +192,7 @@ def discover_base(force=False):
         base = _probe_port(port)
         if base:
             _port_cache.update(base=base, at=now)
+            _save_last_port(port)
             log("engine found at", base)
             return base
 
@@ -421,9 +457,11 @@ def _handle(msg):
             _reply(msg_id, {"content": [{"type": "text", "text": str(e)}],
                             "isError": True})
         except Exception as e:  # noqa: BLE001 - surface everything to the caller
+            tb = traceback.format_exc()
             log("tool", name, "failed:", repr(e))
+            log(tb)
             _reply(msg_id, {"content": [{"type": "text",
-                            "text": f"工具执行出错：{type(e).__name__}: {e}"}],
+                            "text": f"工具执行出错：{type(e).__name__}: {e}\n{tb[-1500:]}"}],
                             "isError": True})
     elif is_notification:
         pass
@@ -446,6 +484,7 @@ def main():
             _handle(msg)
         except Exception as e:  # noqa: BLE001
             log("handler crash:", repr(e))
+            log(traceback.format_exc())
             msg_id = msg.get("id")
             if msg_id is not None:
                 _reply(msg_id, error={"code": -32603, "message": f"internal error: {e}"})

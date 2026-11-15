@@ -1,6 +1,6 @@
 {
   "name": "locmodel-image",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Draw images through the local LocModel image engine (stable-diffusion.cpp sd-server): txt2img, img2img, LoRA list and engine status.",
   "author": { "name": "ZCode workspace" },
   "mcpServers": ".mcp.json",
